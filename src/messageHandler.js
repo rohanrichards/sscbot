@@ -1,24 +1,23 @@
 'use strict';
 
-var logger = require('winston'),
-	Triggers = require('./triggers.js');
+const logger = require('winston'),
+	Triggers = require('./triggers.js'),
+	Commands = require('./commands.js');
 
-var MessageHandler = function (discordClient) {
+var MessageHandler = function (discordClient, emitter) {
 	this.COMMAND_CHARACTER = '!';
 	this.COMMAND_START = 0;
 	this.COMMAND_LENGTH = 1;
 	this.discordClient = discordClient;
+	this._emitter = emitter;
 
-	this._triggers = new Triggers(this.discordClient);
+	this._triggers = new Triggers(this.discordClient, this._emitter);
+	this._commands = new Commands(this.discordClient, this._emitter);
 };
 
 MessageHandler.prototype.handle = function (message) {
-	if (message.content.substring(this.COMMAND_START, this.COMMAND_LENGTH) === this.COMMAND_CHARACTER) {
-		logger.info('handler got command:');
-		logger.info(`Author: ${message.author.username}`);
-		logger.info(`Content: ${message.content}`);
-		logger.info(`At: ${message.createdTimestamp}`);
-		// this._commands.run(message);
+	if(message.content.substring(this.COMMAND_START, this.COMMAND_LENGTH) === this.COMMAND_CHARACTER) {
+		this._commands.handle(message);
 	} else {
 		this._triggers.handle(message);
 	}

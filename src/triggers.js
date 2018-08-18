@@ -1,23 +1,32 @@
 'use strict';
 
-var logger = require('winston');
+var logger = require('winston'),
+	controller = require('../api/triggerWord/triggerWord.controller.js');
 
-var Triggers = function (discordClient) {
+var Triggers = function (discordClient, emitter) {
 
 	this._discordClient = discordClient;
 	this.clientId = this._discordClient.user.id;
-	logger.info('user id', this.clientId);
+	this._emitter = emitter;
 
-	this.triggers = [
-		{
-			word: 'word1',
-			response: ['you said word1!']
-		},
-		{
-			word: 'word2',
-			response: ['you said word2!', 'word2, is what you said!', 'THIS IS A RANDOM REPLY', 'eseray smells funny']
-		}
-	];
+	this._emitter.on('TriggerWord:create', () => this.refreshTriggers());
+
+	this.triggers = [];
+
+	controller.index().then(data => {
+		// this.triggers = JSON.stringify(data);
+		this.triggers = JSON.parse(data);
+		logger.info(this.triggers);
+	});
+};
+
+Triggers.prototype.refreshTriggers = function () {
+	logger.info('refreshing triggers');
+	controller.index().then(data => {
+		// this.triggers = JSON.stringify(data);
+		this.triggers = JSON.parse(data);
+		logger.info(this.triggers);
+	});
 };
 
 Triggers.prototype.isOwner = function (message) {
@@ -34,7 +43,7 @@ Triggers.prototype.handle = function (message) {
 		return false;
 	}
 
-	logger.info('trigger got message');
+	logger.info('trigger got message: ', message.content);
 	var triggers = this.regex(message.content);
 	if(triggers) {
 		logger.info(`message passed regex test: matches received ${triggers.length}`);
