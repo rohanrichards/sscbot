@@ -13,6 +13,7 @@ gulp.task('lint', function () {
 
 gulp.task('dev', function () {
 	var stream = nodemon({
+		exec: 'node --inspect-brk',
 		script: 'app.js',
 		extension: 'js',
 		watch: [

@@ -26,6 +26,13 @@ var TriggerWordController = function () {
 			.then(JSON.stringify);
 	};
 
+	this.show = function (data) {
+		return TriggerWord.findOne({word: data})
+			.lean()
+			.exec()
+			.then(JSON.stringify);
+	};
+
 };
 
 module.exports = new TriggerWordController();

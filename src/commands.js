@@ -7,12 +7,9 @@ var Commands = function (discordClient, emitter) {
 	this._discordClient = discordClient;
 	this._emitter = emitter;
 
-	this.commands = [
-		{
-			word: 'trigger',
-			response: (message) => this.trigger(message)
-		}
-	];
+	this.commands = {
+		'!trigger': (message) => this.trigger(message)
+	};
 };
 
 Commands.prototype.isOwner = function (message) {
@@ -25,32 +22,25 @@ Commands.prototype.handle = function (message) {
 		return false;
 	}
 
-	let command = this.match(message);
-	logger.info('trigger command : ', command);
-	if(command) {
-		command.response(message);
-	}
-};
+	let messageArray = message.content.split(' ');
+	let command = messageArray[0];
 
-Commands.prototype.match = function (message) {
-	let content = message.content;
-	content = content.substring(1);
-	for(var i = 0; i < this.commands.length; i++) {
-		let command = this.commands[i];
-		let match = content.match(command.word);
-		logger.info(match);
-		if(match) {
-			return command;
-		}
+	try {
+		this.commands[command](message);
+	} catch(e) {
+		logger.error(e);
 	}
-	return null;
 };
 
 Commands.prototype.trigger = function (message) {
 	const SUB_COMMAND_INDEX = 1; //index of sub command (add/remove)
 	const COMMAND_COUNT = 2; //total count of commands and sub commands to remove from string
-	const SUB_COMMAND_ADD_TRIGGER = 'add'; //sub command string for add command
-	const SUB_COMMAND_REMOVE_TRIGGER = 'remove'; //sub command string for remove command
+
+	const SUB_COMMANDS = {
+		'add': (triggerObject, message) => this.triggerAdd(triggerObject, message),
+		'remove': (triggerObject, message) => this.triggerRemove(triggerObject, message),
+		'list': (triggerObject, message) => this.triggerList(triggerObject, message)
+	};
 
 	logger.info('trigger command for message: ', message.content);
 	let messageArray = message.content.split(' ');
@@ -64,41 +54,79 @@ Commands.prototype.trigger = function (message) {
 
 	let triggerObject = generateTriggerObjectFromString(responseString);
 
-	if(subCommand === SUB_COMMAND_ADD_TRIGGER) {
-		this.triggerAdd(triggerObject);
-	} else if(subCommand === SUB_COMMAND_REMOVE_TRIGGER) {
-		this.triggerRemove(triggerObject);
+	try {
+		SUB_COMMANDS[subCommand](triggerObject, message);
+	} catch(e) {
+		logger.error(e);
 	}
 };
 
-Commands.prototype.triggerAdd = function (triggerObject) {
+Commands.prototype.triggerAdd = function (triggerObject, message) {
 	logger.info(`adding trigger word: [${triggerObject.word}], with response: [${triggerObject.response}]`);
 	controller.createOrUpdate(triggerObject)
 		.then(() => {
 			logger.info('success adding trigger');
 			//new trigger word event
 			this._emitter.emit('TriggerWord:create');
+			message.reply('Trigger word added');
 		})
 		.catch(logger.error);
 };
 
-Commands.prototype.triggerRemove = function (triggerObject) {
+Commands.prototype.triggerRemove = function (triggerObject, message) {
 	logger.info(`removing trigger word: [${triggerObject.word}], with response: [${triggerObject.response}]`);
 };
 
-function generateTriggerObjectFromString(messageString){
+Commands.prototype.triggerList = function (triggerObject, message) {
+	if(!triggerObject.word) {
+		controller.index()
+			.then(triggers => {
+				triggers = JSON.parse(triggers);
+				if(triggers.length == 0) {
+					logger.error('no trigger words yet!');
+					return null;
+				}
+
+				logger.info(`found ${triggers.length} trigger words: ${triggers}`);
+				let triggerWords = triggers.map(t => t.word);
+				message.reply(`current trigger words: ${triggerWords}`);
+			})
+			.catch(logger.error);
+	} else {
+		controller.show(triggerObject.word)
+			.then(trigger => {
+				trigger = JSON.parse(trigger);
+				logger.info(`trigger is: ${trigger}`);
+
+				if(!trigger) {
+					logger.error('no matching trigger word found!');
+					return null;
+				}
+				logger.info(`found matching word: ${trigger}`);
+				message.reply(`${trigger.word}: ${trigger.response}`);
+			})
+			.catch(logger.error);
+	}
+};
+
+function generateTriggerObjectFromString(messageString) {
+	if(!messageString) {
+		return { word: null, response: null };
+	}
+
 	let isSingleQuote = messageString.indexOf('\'') === 0;
 	let isDoubleQuote = messageString.indexOf('"') === 0;
 	let isPhrase = (isSingleQuote || isDoubleQuote) ? true : false;
 	let regex = /(["'](.*)["'])(.*)/;
 
-	if(!isPhrase){
+	if(!isPhrase) {
 		//no quote marks this is not a phrase simply return first word
 		let messageArray = messageString.split(' ');
-		messageString.shift();
+		// messageString.shift();
 		let triggerWord = messageArray[0];
-		let messageString = messageArray.join(' ');
-		return {word: triggerWord, response: messageString};
+		messageString = messageArray.join(' ');
+
+		return { word: triggerWord, response: messageString };
 	}
 
 	let matches = messageString.match(regex);
@@ -108,7 +136,7 @@ function generateTriggerObjectFromString(messageString){
 	triggerResponse = triggerResponse.substr(1);
 
 	logger.info('found matches: ', matches);
-	return {word: triggerPhrase, response: triggerResponse};
+	return { word: triggerPhrase, response: triggerResponse };
 }
 
 module.exports = Commands;
