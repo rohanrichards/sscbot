@@ -39,6 +39,7 @@ Triggers.prototype.getRandomResponse = function (responses) {
 };
 
 Triggers.prototype.handle = function (message) {
+	//ignore messages from the bot itself
 	if(this.isOwner(message)) {
 		return false;
 	}

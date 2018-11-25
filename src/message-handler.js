@@ -1,8 +1,8 @@
 'use strict';
 
 const logger = require('winston'),
-	Triggers = require('./triggers.js'),
-	Commands = require('./commands.js');
+	Triggers = require('./trigger-handler'),
+	Commands = require('./command-handler');
 
 var MessageHandler = function (discordClient, emitter) {
 	this.COMMAND_CHARACTER = '!';
@@ -16,10 +16,12 @@ var MessageHandler = function (discordClient, emitter) {
 };
 
 MessageHandler.prototype.handle = function (message) {
+	//is this a command? (has command character at the front)
 	if(message.content.substring(this.COMMAND_START, this.COMMAND_LENGTH) === this.COMMAND_CHARACTER) {
 		this._commands.handle(message);
 	} else {
-		this._triggers.handle(message);
+		//its not a command so test if it contains trigger words
+		// this._triggers.handle(message);
 	}
 };
 

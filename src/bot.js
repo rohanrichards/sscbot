@@ -3,8 +3,8 @@
 var Discord = require('discord.js'),
 	logger = require('winston'),
 	EventEmitter = require('events'),
-	auth = require('../config/auth.js'),
-	MessageHandler = require('./messageHandler.js');
+	auth = require('./config/auth.js'),
+	MessageHandler = require('./message-handler.js');
 
 class SSCEmitter extends EventEmitter {}
 
@@ -22,7 +22,7 @@ var SmallBot = function () {
 	});
 
 	this._discordClient.on('message', message => {
-		logger.info(`discord client onMessage event: [${message}] - passing to handler`);
+		// logger.info(`discord client onMessage event: [${message}] - passing to handler`);
 		this._messageHandler.handle(message);
 	});
 
