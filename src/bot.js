@@ -8,7 +8,7 @@ var Discord = require('discord.js'),
 
 class SSCEmitter extends EventEmitter {}
 
-var SmallBot = function () {
+var SSCBot = function () {
 	logger.info('I am alive!');
 
 	this._discordClient = new Discord.Client();
@@ -17,7 +17,6 @@ var SmallBot = function () {
 	// logger.info(this._discordClient)
 
 	this._discordClient.on('ready', () => {
-		logger.info('discord client onReady event');
 		this._messageHandler = new MessageHandler(this._discordClient, this._emitter);
 	});
 
@@ -28,15 +27,15 @@ var SmallBot = function () {
 
 	this._discordClient.login(auth.discord.BOT_USER_TOKEN)
 		.then(() => {
-			logger.info('discord client login complete');
+			logger.info('discord client login complete: bot is ready');
 		})
 		.catch((err) => {
 			logger.error(err);
 		});
 };
 
-SmallBot.prototype.methodName = function () {
+SSCBot.prototype.methodName = function () {
 
 };
 
-module.exports = new SmallBot();
+module.exports = new SSCBot();

@@ -1,5 +1,5 @@
 var logger = require('winston'),
-	SmallBot = require('./src/bot.js'),
+	SSCBot = require('./src/bot.js'),
 	mongoose = require('mongoose');
 
 // Configure logger settings

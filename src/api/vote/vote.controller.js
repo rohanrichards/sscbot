@@ -36,7 +36,6 @@ var VoteController = function () {
 					{ $push: { nominations: data } } // update
 				)
 					.then((info) => {
-						logger.info(info);
 						if(!info.nModified){
 							return Vote.update(
 								{ '_id': vote._id, 'nominations.by': data.by }, // query

@@ -11,7 +11,7 @@ var Commands = function (discordClient, emitter) {
 	this._voteCommand = new Vote(discordClient, emitter);
 
 	this.commands = {
-		'!trigger': (message) => this._triggerCommand.handle(message),
+		// '!trigger': (message) => this._triggerCommand.handle(message),
 		'!vote': (message) => this._voteCommand.handle(message),
 	};
 };

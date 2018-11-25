@@ -16,7 +16,6 @@ var Triggers = function (discordClient, emitter) {
 	controller.index().then(data => {
 		// this.triggers = JSON.stringify(data);
 		this.triggers = JSON.parse(data);
-		logger.info(this.triggers);
 	});
 };
 
@@ -25,7 +24,6 @@ Triggers.prototype.refreshTriggers = function () {
 	controller.index().then(data => {
 		// this.triggers = JSON.stringify(data);
 		this.triggers = JSON.parse(data);
-		logger.info(this.triggers);
 	});
 };
 

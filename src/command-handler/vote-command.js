@@ -10,7 +10,12 @@ var Vote = function (discordClient, emitter) {
 	this.SUB_COMMAND_INDEX = 1; //index of sub command (add/remove)
 	this.COMMAND_COUNT = 2; //total count of commands and sub commands to remove from string
 	this.CHANNEL_NAME = 'events';
-	this.MOD_ROLES = ['Admin'];
+	this.MOD_ROLES = ['Owner', 'Admin', 'Moderator'];
+	this.MESSAGES = {
+		START: 'Streamer of the Week nominations are now open! To vote just type `!vote add @[username]`',
+		ADD: 'Your vote has been recorded!',
+		END: 'The Streamer of the Week votes have been closed!'
+	}
 
 	this.SUB_COMMANDS = {
 		'start': (VoteObject, message) => this.VoteStart(VoteObject, message),
@@ -76,7 +81,7 @@ Vote.prototype.VoteStart = function (VoteObject, message) {
 					.then((vote) => {
 						logger.info('success starting vote: ');
 						this._emitter.emit('Vote:start');
-						message.reply('started a new vote!');
+						message.reply(this.MESSAGES.START);
 					})
 					.catch(logger.error);
 			}
@@ -93,7 +98,7 @@ Vote.prototype.VoteEnd = function (VoteObject, message) {
 	VoteObject.open = false;
 	controller.show({ open: true })
 		.then(vote => {
-			if(vote=="null") {
+			if(vote=='null') {
 				message.reply('There is no active vote to close.');
 				return;
 			} else {
@@ -101,8 +106,9 @@ Vote.prototype.VoteEnd = function (VoteObject, message) {
 					.then((vote) => {
 						logger.info('success ending vote');
 						this._emitter.emit('Vote:end');
-						message.reply('ended the vote!');
-						logger.info(COUNT_VOTES(vote.nominations));
+						message.reply(this.MESSAGES.END);
+						const COUNTS = COUNT_VOTES(vote.nominations)
+						printVotes(message, COUNTS);
 					})
 					.catch(logger.error);
 			}
@@ -145,5 +151,16 @@ const HAS_ROLE = function (memberRoles, allowedRoles) {
 		});
 	});
 };
+
+const printVotes = function(message, countObject) {
+	let response = '';
+	const countArray = Object.entries(countObject).sort((a, b) => a - b)
+	response += `The winner is: ${countArray[0][0]}\n`;
+	response += `Scoreboard: \n`;
+	for (var i = 0; i < countArray.length; i++) {
+		response += `${countArray[i][0]} - ${countArray[i][1]}\n`;
+	}
+	message.channel.sendMessage(response);
+}
 
 module.exports = Vote;
